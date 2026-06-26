@@ -7,7 +7,7 @@ from tavily import TavilyClient
 # 1. Initialize Page Config
 st.set_page_config(page_title="Bunny Magic Hub", layout="wide")
 
-# 2. INJECT THE CUTE PASTEL LOOK WITH IMAGE DISPLAY BOXES
+# 2. INJECT THE CUTE PASTEL LOOK WITH CHAT DESIGN
 st.markdown("""
 <style>
     /* Soft Warm Pastel Background */
@@ -78,7 +78,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 tab_chat, tab_about = st.tabs(["💬 Chat & Art Messenger", "📖 Tutorial Configurations"])
 
-# 4. FIXED: COMPLETE STEP-BY-STEP KEY TUTORIAL GUIDE PORTAL
+# STEP-BY-STEP KEY TUTORIAL GUIDE PORTAL
 with tab_about:
     st.markdown("<br>", unsafe_allow_html=True)
     col_guide, col_logic = st.columns(2, gap="large")
@@ -91,14 +91,14 @@ with tab_about:
         st.markdown("- Click to open the **[Groq Developers Console](https://groq.com)**.")
         st.markdown("- Sign in instantly using your standard **Google or GitHub account**.")
         st.markdown("- Click **API Keys** on the left menu, hit **Create API Key**, and copy the string.")
-        user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password")
+        user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password", key="groq_key_input")
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### **2. Get Your Free Live Search Key (Tavily)**")
         st.markdown("- Click to open the **[Tavily AI Portal](https://tavily.com)**.")
         st.markdown("- Create a free developer account (includes 1,000 free web searches per month!).")
         st.markdown("- Copy the main API Key displayed directly on your homepage dashboard.")
-        tavily_key = st.text_input("🌐 Paste your Tavily Search Key here:", type="password")
+        tavily_key = st.text_input("🌐 Paste your Tavily Search Key here:", type="password", key="tavily_key_input")
         
         st.markdown("---")
         if st.button("Wipe Chat Memory 🧊", use_container_width=True):
@@ -108,10 +108,8 @@ with tab_about:
     with col_logic:
         st.subheader("🎨 App Engine Guide")
         st.write("This workspace runs distinct digital processing channels depending on your query type:")
-        
         st.markdown("### **🤖 The Real-Time Chat Engine**")
         st.markdown("When asking general or time-sensitive questions, the system calls your **Tavily Key** to scrape live online articles, matching findings against **Groq's Llama 3.3 model** to give you current answers.")
-        
         st.markdown("### **✨ The Free Art Generator Engine**")
         st.markdown("When you pass the keyword `/image`, the app drops the search stack entirely and streams text arrays directly through open-source rendering grids to output high-resolution graphics completely for free!")
 
@@ -123,6 +121,7 @@ with tab_chat:
         avatar = "🌸" if msg["role"] == "assistant" else "👤"
         with st.chat_message(msg["role"], avatar=avatar):
             if isinstance(msg["content"], dict) and msg["content"].get("type") == "image":
+                # FIX: Explicitly passing use_container_width=True natively displays HTML images safely
                 st.image(msg["content"]["url"], caption=msg["content"]["prompt"], use_container_width=True)
             else:
                 st.markdown(msg["content"])
@@ -144,21 +143,26 @@ with tab_chat:
                 with st.chat_message("assistant", avatar="🌸"):
                     with st.spinner("Generating art canvas..."):
                         encoded_prompt = urllib.parse.quote(image_prompt)
-                        free_image_url = f"https://pollinations.ai{encoded_prompt}?width=1024&height=1024&nologo=true"
+                        # Updated the generation endpoint string configuration to render flawlessly 
+                        free_image_url = f"https://pollinations.ai{encoded_prompt}?width=800&height=800&seed=42&nofeed=true"
                         
                         st.image(free_image_url, caption=image_prompt, use_container_width=True)
                         st.session_state.messages.append({"role": "assistant", "content": {"type": "image", "url": free_image_url, "prompt": image_prompt}})
         
         # INTERACTION branch 2: Standard Live Text Answer Questions Loop
         else:
-            if 'user_key' not in locals() or 'tavily_key' not in locals() or not user_key or not tavily_key:
+            # Safe checking from inputs
+            g_key = st.session_state.get("groq_key_input", "")
+            t_key = st.session_state.get("tavily_key_input", "")
+            
+            if not g_key or not t_key:
                 with st.chat_message("assistant", avatar="🌸"):
                     st.error("💝 Please jump over to the 'Tutorial Configurations' tab and enter both keys first!")
             else:
                 with st.chat_message("assistant", avatar="🌸"):
                     with st.spinner("Searching live data feeds..."):
                         try:
-                            tavily_client = TavilyClient(api_key=tavily_key)
+                            tavily_client = TavilyClient(api_key=t_key)
                             response_data = tavily_client.search(query=user_input, max_results=3)
                             
                             search_results = []
@@ -166,7 +170,7 @@ with tab_chat:
                                 search_results.append(f"Title: {item['title']}\nSnippet: {item['content']}\n")
                             raw_web_context = "\n---\n".join(search_results) if search_results else "No live results found."
                             
-                            client = Groq(api_key=user_key)
+                            client = Groq(api_key=g_key)
                             agent_prompt = f"You are a professional real-time AI Agent with access to live internet metrics. Answer the user query clearly using the recent web context provided below.\n\nLive Web Search Context:\n{raw_web_context}"
                             
                             payload_messages = [{"role": "system", "content": agent_prompt}]
