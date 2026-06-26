@@ -1,2 +1,2 @@
 groq
-duckduckgo-search
+tavily-python

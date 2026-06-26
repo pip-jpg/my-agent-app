@@ -1,7 +1,8 @@
 import os
 import streamlit as st
 from groq import Groq
-from duckduckgo_search import DDGS
+# Swapped the search component for the robust AI-native Tavily library
+from tavily import TavilyClient
 
 # 1. Initialize Page Config
 st.set_page_config(page_title="Bunny Research Hub", layout="wide")
@@ -109,20 +110,20 @@ with tab_about:
     col_guide, col_logic = st.columns(2, gap="large")
     
     with col_guide:
-        st.subheader("🔑 How to Get Your Free Key")
-        st.write("To use this app for free without creating a paid account, you just need a temporary access key:")
-        st.markdown("1. Click this link to go to the **[Groq Developers Console](https://groq.com)**.")
-        st.markdown("2. Sign in instantly using your standard **Google or GitHub account**.")
-        st.markdown("3. In the left panel, click on **API Keys**, then hit the **Create API Key** button.")
-        st.markdown("4. Copy the long string starting with `gsk_` and paste it right into our settings box below!")
+        st.subheader("🔑 Access Gateways")
+        st.write("To keep your execution loops completely free, paste your personal credentials below:")
         
-        st.markdown("---")
-        user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password")
+        user_key = st.text_input("🌸 Paste your Groq API Key:", type="password")
+        st.markdown("[Get a free Groq key here](https://groq.com)")
+        
+        # Added input field for the Tavily search key
+        tavily_key = st.text_input("🌐 Paste your Tavily Search Key:", type="password")
+        st.markdown("[Get a free Tavily Search key here](https://tavily.com)")
 
     with col_logic:
         st.subheader("🤖 How Live Search Works")
         st.write("Unlike simple chat bots, this app can step outside its training data to scrape live internet data:")
-        st.markdown("- **Live Web Querying**: Formulates automated keyword vectors and harvests fresh search snippets via DuckDuckGo.")
+        st.markdown("- **Live Web Querying**: Formulates automated keyword vectors and harvests fresh search snippets via Tavily Search API.")
         st.markdown("- **Information Retention**: Utilizes dedicated memory clusters so your data never gets erased when clicking menus!")
 
 # TAB 2: MAIN WORKSPACE
@@ -156,17 +157,21 @@ with tab_workspace:
         
         if button_clicked:
             if 'user_key' not in locals() or not user_key:
-                st.error("💝 Please hop over to the 'How It Works' tab and paste your API key first!")
+                st.error("💝 Please hop over to the 'How It Works' tab and paste your Groq API key first!")
+            elif 'tavily_key' not in locals() or not tavily_key:
+                st.error("💝 Please hop over to the 'How It Works' tab and paste your Tavily Search key first!")
             elif not user_query:
                 st.warning("🧁 Oops! Please write a topic vector parameter so the agents know what to look for.")
             else:
                 with st.spinner("✨ Tiny agents are typing, thinking, and cleaning raw research files..."):
                     try:
-                        # STEP 1: Run Python Search Web Scraper
+                        # STEP 1: Run Premium AI-Native Search via Tavily
+                        tavily_client = TavilyClient(api_key=tavily_key)
+                        response_data = tavily_client.search(query=user_query, max_results=3)
+                        
                         search_results = []
-                        with DDGS() as ddgs:
-                            for r in ddgs.text(user_query, max_results=4):
-                                search_results.append(f"Title: {r['title']}\nSnippet: {r['body']}\n")
+                        for item in response_data.get('results', []):
+                            search_results.append(f"Title: {item['title']}\nSnippet: {item['content']}\n")
                         
                         raw_web_context = "\n---\n".join(search_results) if search_results else "No live results found."
                         
@@ -187,7 +192,7 @@ with tab_workspace:
                             temperature=agent_creativity
                         )
                         
-                        # FIX: Added the missing '[0]' index markers to correctly unpack the choice response list
+                        # Save the generated text into memory session dictionary profiles
                         st.session_state.agent_output = response.choices[0].message.content
                         st.session_state.last_query = user_query
                         
