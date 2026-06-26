@@ -24,6 +24,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800 !important;
+        letter-spacing: -0.02em;
     }
     
     .stChatInput {
@@ -45,22 +46,31 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.5);
         padding: 8px;
         border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
     .stTabs [data-baseweb="tab"] {
         color: #8a8a8a !important;
         border-radius: 12px;
         padding: 8px 20px;
+        font-weight: 600;
     }
     .stTabs [aria-selected="true"] {
         background-color: #ff758c !important;
         color: #ffffff !important;
+    }
+
+    .stAlert {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid #ffe3e3 !important;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # 3. INITIALIZE INTERACTIVE CHAT STORAGE
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hi! 🌸 I can chat, search the web, or draw pictures for you! To see a picture, just type something like: `/image a cute white bunny wearing a crown`"}]
+    st.session_state.messages = [{"role": "assistant", "content": "Hi! 🌸 I can chat, search the live web, or draw pictures for you! To see a picture, just type something like: `/image a cute white bunny wearing a crown`"}]
 
 st.title("✨ Bunny Magic Hub")
 st.caption("A multi-agent messaging hub equipped with live search routers and free art engines.")
@@ -68,20 +78,42 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 tab_chat, tab_about = st.tabs(["💬 Chat & Art Messenger", "📖 Tutorial Configurations"])
 
-# CREDENTIAL KEYS GATEWAY PORTAL
+# 4. FIXED: COMPLETE STEP-BY-STEP KEY TUTORIAL GUIDE PORTAL
 with tab_about:
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("Platform Credentials")
-    user_key = st.text_input("🌸 Paste your Groq API Key:", type="password")
-    tavily_key = st.text_input("🌐 Paste your Tavily Search Key:", type="password")
+    col_guide, col_logic = st.columns(2, gap="large")
     
-    st.markdown("---")
-    st.subheader("🎨 How Image Generation Works")
-    st.write("When you type the special command keyword `/image`, the application isolates your descriptor parameters and calls an open-source image generation engine to render a visual layout for free!")
+    with col_guide:
+        st.subheader("🔑 Step-by-Step Key Setup Guide")
+        st.write("To use this app completely for free, paste your personal credentials below:")
+        
+        st.markdown("### **1. Get Your Free AI Brain Key (Groq)**")
+        st.markdown("- Click to open the **[Groq Developers Console](https://groq.com)**.")
+        st.markdown("- Sign in instantly using your standard **Google or GitHub account**.")
+        st.markdown("- Click **API Keys** on the left menu, hit **Create API Key**, and copy the string.")
+        user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### **2. Get Your Free Live Search Key (Tavily)**")
+        st.markdown("- Click to open the **[Tavily AI Portal](https://tavily.com)**.")
+        st.markdown("- Create a free developer account (includes 1,000 free web searches per month!).")
+        st.markdown("- Copy the main API Key displayed directly on your homepage dashboard.")
+        tavily_key = st.text_input("🌐 Paste your Tavily Search Key here:", type="password")
+        
+        st.markdown("---")
+        if st.button("Wipe Chat Memory 🧊", use_container_width=True):
+            st.session_state.messages = [{"role": "assistant", "content": "Hi there! 🌸 Memory cleared. What should we look into next?"}]
+            st.rerun()
 
-    if st.button("Wipe Chat Memory 🧊", use_container_width=True):
-        st.session_state.messages = [{"role": "assistant", "content": "Hi there! 🌸 Memory cleared. What should we look into next?"}]
-        st.rerun()
+    with col_logic:
+        st.subheader("🎨 App Engine Guide")
+        st.write("This workspace runs distinct digital processing channels depending on your query type:")
+        
+        st.markdown("### **🤖 The Real-Time Chat Engine**")
+        st.markdown("When asking general or time-sensitive questions, the system calls your **Tavily Key** to scrape live online articles, matching findings against **Groq's Llama 3.3 model** to give you current answers.")
+        
+        st.markdown("### **✨ The Free Art Generator Engine**")
+        st.markdown("When you pass the keyword `/image`, the app drops the search stack entirely and streams text arrays directly through open-source rendering grids to output high-resolution graphics completely for free!")
 
 # INTERACTIVE STREAM CHAT DISPLAY
 with tab_chat:
@@ -90,7 +122,6 @@ with tab_chat:
     for msg in st.session_state.messages:
         avatar = "🌸" if msg["role"] == "assistant" else "👤"
         with st.chat_message(msg["role"], avatar=avatar):
-            # Check if message is a saved image link dictionary block
             if isinstance(msg["content"], dict) and msg["content"].get("type") == "image":
                 st.image(msg["content"]["url"], caption=msg["content"]["prompt"], use_container_width=True)
             else:
@@ -104,7 +135,6 @@ with tab_chat:
         
         # INTERACTION branch 1: The user wants an IMAGE
         if user_input.strip().lower().startswith("/image"):
-            # Strip away the command keyword to fetch the raw design description string
             image_prompt = user_input.replace("/image", "").strip()
             
             if not image_prompt:
@@ -113,19 +143,15 @@ with tab_chat:
             else:
                 with st.chat_message("assistant", avatar="🌸"):
                     with st.spinner("Generating art canvas..."):
-                        # Safe URL encode translation formatting
                         encoded_prompt = urllib.parse.quote(image_prompt)
-                        # Connect directly to free, open-source stable diffusion router API
                         free_image_url = f"https://pollinations.ai{encoded_prompt}?width=1024&height=1024&nologo=true"
                         
-                        # Render live onto the screen layout panel
                         st.image(free_image_url, caption=image_prompt, use_container_width=True)
-                        # Push dictionary indicator object straight to historical message arrays
                         st.session_state.messages.append({"role": "assistant", "content": {"type": "image", "url": free_image_url, "prompt": image_prompt}})
         
         # INTERACTION branch 2: Standard Live Text Answer Questions Loop
         else:
-            if not user_key or not tavily_key:
+            if 'user_key' not in locals() or 'tavily_key' not in locals() or not user_key or not tavily_key:
                 with st.chat_message("assistant", avatar="🌸"):
                     st.error("💝 Please jump over to the 'Tutorial Configurations' tab and enter both keys first!")
             else:
@@ -145,7 +171,7 @@ with tab_chat:
                             
                             payload_messages = [{"role": "system", "content": agent_prompt}]
                             for m in st.session_state.messages[-5:]:
-                                if isinstance(m["content"], str): # Filter text blocks only
+                                if isinstance(m["content"], str):
                                     payload_messages.append({"role": m["role"], "content": m["content"]})
                                 
                             response = client.chat.completions.create(
