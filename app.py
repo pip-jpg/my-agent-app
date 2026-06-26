@@ -1,11 +1,12 @@
 import os
 import streamlit as st
 from groq import Groq
+from duckduckgo_search import DDGS
 
 # 1. Initialize Page Config
 st.set_page_config(page_title="Bunny Research Hub", layout="wide")
 
-# 2. INJECT A CUTE & SMOOTH PASTEL DESIGN
+# 2. INJECT CUTE & SMOOTH PASTEL DESIGN WITH REFRESH FIXES
 st.markdown("""
 <style>
     /* Soft Warm Pastel Background */
@@ -88,18 +89,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. App Header Layout
+# 3. INITIALIZE SESSION STATE MEMORY: Keeps outputs frozen on screen
+if "agent_output" not in st.session_state:
+    st.session_state.agent_output = ""
+if "last_query" not in st.session_state:
+    st.session_state.last_query = ""
+
+# App Header Layout
 st.title("✨ My Cute AI Agent Hub")
-st.caption("Your friendly, autonomous companion that handles research and writing for you!")
+st.caption("Your friendly, autonomous companion with live web search and smart memory storage!")
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Create Cute Interface Tabs
 tab_workspace, tab_about = st.tabs(["🚀 Launch Workspace", "📖 How It Works & About Page"])
 
-# TAB 1: THE ABOUT & KEY GUIDE PAGE
+# TAB 1: ABOUT & INSTRUCTIONS PAGE
 with tab_about:
     st.markdown("<br>", unsafe_allow_html=True)
-    
     col_guide, col_logic = st.columns(2, gap="large")
     
     with col_guide:
@@ -114,25 +120,23 @@ with tab_about:
         user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password")
 
     with col_logic:
-        st.subheader("🤖 How the Agentic AI Works")
-        st.write("Unlike simple chat bots, this app deploys an autonomous multi-agent sequence behind the scenes:")
-        st.markdown("🤝 **The Collaboration Loop**:")
-        st.markdown("- **The Researcher Agent**: Evaluates your chosen topic, extracts deep insight variables, and organizes a rough factual index sheet.")
-        st.markdown("- **The Content Writer Agent**: Receives those rough notes, applies creative text formatting rules, and refines everything into a gorgeous, readable report.")
-        st.info("Because they collaborate step-by-step, the output is significantly more detailed than a simple standalone AI prompt!")
+        st.subheader("🤖 How Live Search Works")
+        st.write("Unlike simple chat bots, this app can step outside its training data to scrape live internet data:")
+        st.markdown("- **Live Web Querying**: Formulates automated keyword vectors and harvests fresh search snippets via DuckDuckGo.")
+        st.markdown("- **Information Retention**: Utilizes dedicated memory clusters so your data never gets erased when clicking menus!")
 
 # TAB 2: MAIN WORKSPACE
 with tab_workspace:
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Grid split structure
-    col_input, col_output = st.columns([4, 6], gap="large")
+    col_input, col_output = st.columns(2, gap="large")
     
     with col_input:
         st.subheader("Your Task Settings")
-        user_topic = st.text_input(
-            "What should the agents work on today?", 
-            placeholder="e.g., The cutest coffee shop designs in Tokyo",
+        user_query = st.text_input(
+            "What should the agents research for you right now?", 
+            placeholder="e.g., What World Cup matches are lined up for today?",
         )
         
         with st.expander("🎈 Fun Adjustment Options"):
@@ -140,44 +144,60 @@ with tab_workspace:
             
         st.markdown("<br>", unsafe_allow_html=True)
         button_clicked = st.button("Start the AI Magic! ✨", use_container_width=True)
+        
+        # Clear button to wipe the frozen state manually
+        if st.button("Wipe Memory Clear 🧊", use_container_width=True):
+            st.session_state.agent_output = ""
+            st.session_state.last_query = ""
+            st.rerun()
 
     with col_output:
         st.subheader("Live Working Feed")
         
         if button_clicked:
-            # Check for key from the other tab variable
             if 'user_key' not in locals() or not user_key:
                 st.error("💝 Please hop over to the 'How It Works' tab and paste your API key first!")
-            elif not user_topic:
+            elif not user_query:
                 st.warning("🧁 Oops! Please write a topic vector parameter so the agents know what to look for.")
             else:
                 with st.spinner("✨ Tiny agents are typing, thinking, and cleaning raw research files..."):
                     try:
+                        # STEP 1: Run Python Search Web Scraper
+                        search_results = []
+                        with DDGS() as ddgs:
+                            for r in ddgs.text(user_query, max_results=4):
+                                search_results.append(f"Title: {r['title']}\nSnippet: {r['body']}\n")
+                        
+                        raw_web_context = "\n---\n".join(search_results) if search_results else "No live results found."
+                        
+                        # STEP 2: Pass internet context bundle straight into Groq
                         client = Groq(api_key=user_key)
                         
-                        # Step 1
-                        research_prompt = f"You are a Senior Research Analyst. Break down key trends, pros, and cons regarding: {user_topic}. Provide a detailed bulleted summary of research findings."
-                        research_response = client.chat.completions.create(
-                            messages=[{"role": "user", "content": research_prompt}],
-                            model="llama-3.3-70b-versatile",
-                            temperature=0.2
-                        )
-                        research_notes = research_response.choices[0].message.content
+                        agent_prompt = f"""You are a professional real-time AI Agent. 
+                        Answer the question clearly using the live internet search context provided below.
                         
-                        # Step 2
-                        writer_prompt = f"You are a professional Content Strategist. Take these raw research findings and rewrite them into a compelling, 3-paragraph article:\n\n{research_notes}"
-                        writer_response = client.chat.completions.create(
-                            messages=[{"role": "user", "content": writer_prompt}],
+                        User Question: {user_query}
+                        
+                        Live Web Search Context:
+                        {raw_web_context}"""
+                        
+                        response = client.chat.completions.create(
+                            messages=[{"role": "user", "content": agent_prompt}],
                             model="llama-3.3-70b-versatile",
                             temperature=agent_creativity
                         )
-                        final_article = writer_response.choices[0].message.content
                         
-                        st.success("🎉 All tasks are perfectly completed!")
-                        st.markdown("### 📝 Your Custom Generated Report:")
-                        st.info(final_article)
+                        # Save the generated text into memory session dictionary profiles
+                        st.session_state.agent_output = response.choices.message.content
+                        st.session_state.last_query = user_query
                         
                     except Exception as e:
                         st.error(f"Oh no! An execution glitch happened: {e}")
+                        
+        # RENDER PERSISTENT OUTPUT: Displays saved memory logs so they stay stuck on the screen
+        if st.session_state.agent_output:
+            st.success(f"🎉 Results for: '{st.session_state.last_query}'")
+            st.markdown("### 📝 Your Custom Generated Report:")
+            st.info(st.session_state.agent_output)
         else:
             st.info("App is currently resting. Fill out a topic layout on the left panel to wake the agents up!")
