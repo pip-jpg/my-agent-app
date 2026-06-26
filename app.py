@@ -187,8 +187,8 @@ with tab_workspace:
                             temperature=agent_creativity
                         )
                         
-                        # Save the generated text into memory session dictionary profiles
-                        st.session_state.agent_output = response.choices.message.content
+                        # FIX: Added the missing '[0]' index markers to correctly unpack the choice response list
+                        st.session_state.agent_output = response.choices[0].message.content
                         st.session_state.last_query = user_query
                         
                     except Exception as e:
