@@ -2,156 +2,160 @@ import os
 import streamlit as st
 from groq import Groq
 
-# 1. Initialize High-End Workspace Configuration
-st.set_page_config(page_title="AI Agent Intelligence Hub", layout="wide")
+# 1. Initialize Page Config
+st.set_page_config(page_title="Bunny Research Hub", layout="wide")
 
-# 2. INJECT ULTRA-SMOOTH FINISHED DESIGN STYLE (Custom Color Palette & Soft Shadows)
+# 2. INJECT A CUTE & SMOOTH PASTEL DESIGN
 st.markdown("""
 <style>
-    /* Global Background and Typography Setup */
+    /* Soft Warm Pastel Background */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #f8fafc !important;
-        font-family: 'Inter', -apple-system, sans-serif;
+        background: linear-gradient(135deg, #fff5f5 0%, #f0fff4 50%, #f3e8ff 100%);
+        color: #4a4a4a !important;
+        font-family: 'Quicksand', 'Inter', sans-serif;
     }
     
-    /* Global Smooth Animations for Interactive Assets */
+    /* Smooth transition animations */
     * {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transition: all 0.3s ease-in-out !important;
     }
     
-    /* Premium Header Titles Styling */
+    /* Cute Gradient Title */
     h1 {
-        background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%);
+        background: linear-gradient(90deg, #ff758c 0%, #ff7eb3 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800 !important;
-        letter-spacing: -0.05em;
+        letter-spacing: -0.02em;
     }
     
-    /* Make Input Text Fields Look Smoother & Glass-morphic */
+    /* Pastel Glass Text Inputs */
     .stTextInput>div>div>input {
-        background-color: rgba(30, 41, 59, 0.7) !important;
-        border: 1px solid rgba(148, 163, 184, 0.2) !important;
-        color: #f8fafc !important;
-        border-radius: 12px !important;
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        border: 2px solid #ffe3e3 !important;
+        color: #4a4a4a !important;
+        border-radius: 16px !important;
         padding: 12px 16px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 4px 10px rgba(255, 117, 140, 0.05) !important;
     }
     .stTextInput>div>div>input:focus {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+        border-color: #ff758c !important;
+        box-shadow: 0 0 0 4px rgba(255, 117, 140, 0.15) !important;
     }
     
-    /* Style Layout Interface Card Containers */
-    div[data-testid="stForm"], div[data-testid="element-container"] .stElementContainer {
+    /* Rounded, Friendly Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 12px;
+        background-color: rgba(255, 255, 255, 0.5);
+        padding: 8px;
         border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #8a8a8a !important;
+        border-radius: 12px;
+        padding: 8px 20px;
+        font-weight: 600;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #ff758c !important;
+        color: #ffffff !important;
     }
     
-    /* Customize Action Buttons to Pop Nicely */
+    /* Cheerful Rounded Buttons */
     .stButton>button {
-        background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%) !important;
+        background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%) !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 12px !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+        border-radius: 16px !important;
+        padding: 14px 28px !important;
+        font-weight: 700 !important;
+        box-shadow: 0 6px 16px rgba(255, 117, 140, 0.3) !important;
         cursor: pointer;
     }
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
-    }
-    .stButton>button:active {
-        transform: translateY(1px);
+        transform: scale(1.02);
+        box-shadow: 0 8px 22px rgba(255, 117, 140, 0.43) !important;
     }
     
-    /* Soft Design Enhancements for Output Alert Boxes */
+    /* Styled Containers for Output */
     .stAlert {
-        background-color: rgba(15, 23, 42, 0.6) !important;
-        border: 1px solid rgba(56, 189, 248, 0.3) !important;
-        border-radius: 14px !important;
-        color: #f8fafc !important;
-    }
-    
-    /* Clean Styling for Interface Layout Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(15, 23, 42, 0.4);
-        padding: 6px;
-        border-radius: 12px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #94a3b8 !important;
-        border-radius: 8px;
-        padding: 8px 16px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #1e293b !important;
-        color: #38bdf8 !important;
-        font-weight: 600;
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid #e6fffa !important;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Structural Web App Layout Header
-st.title("Intelligence Hub")
-st.caption("Custom enterprise orchestration space managing autonomous agent processing streams.")
+# 3. App Header Layout
+st.title("✨ My Cute AI Agent Hub")
+st.caption("Your friendly, autonomous companion that handles research and writing for you!")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Create Interface Tabs
-tab_workspace, tab_settings, tab_about = st.tabs(["🚀 Research Workspace", "🔑 API Configurations", "ℹ️ System Info"])
+# Create Cute Interface Tabs
+tab_workspace, tab_about = st.tabs(["🚀 Launch Workspace", "📖 How It Works & About Page"])
 
-# WINDOW 1: API CONFIGURATIONS
-with tab_settings:
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("Authentication Gateways")
-    user_key = st.text_input("Enter your Groq API Key:", type="password", help="Authentication keys are processed securely.")
-    st.markdown("[Generate your platform credentials here](https://groq.com)")
-
-# WINDOW 2: SYSTEM INFO
+# TAB 1: THE ABOUT & KEY GUIDE PAGE
 with tab_about:
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("Orchestration Details")
-    st.write("This workspace runs an automated sequence across specialized virtual operations personas:")
-    st.markdown("- **Research Persona**: Evaluates context constraints and summarizes underlying technical structures.")
-    st.markdown("- **Delivery Persona**: Compiles and refines syntax assets into ready documentation.")
+    
+    col_guide, col_logic = st.columns(2, gap="large")
+    
+    with col_guide:
+        st.subheader("🔑 How to Get Your Free Key")
+        st.write("To use this app for free without creating a paid account, you just need a temporary access key:")
+        st.markdown("1. Click this link to go to the **[Groq Developers Console](https://groq.com)**.")
+        st.markdown("2. Sign in instantly using your standard **Google or GitHub account**.")
+        st.markdown("3. In the left panel, click on **API Keys**, then hit the **Create API Key** button.")
+        st.markdown("4. Copy the long string starting with `gsk_` and paste it right into our settings box below!")
+        
+        st.markdown("---")
+        user_key = st.text_input("🌸 Paste your Groq API Key here:", type="password")
 
-# WINDOW 3: MAIN WORKSPACE
+    with col_logic:
+        st.subheader("🤖 How the Agentic AI Works")
+        st.write("Unlike simple chat bots, this app deploys an autonomous multi-agent sequence behind the scenes:")
+        st.markdown("🤝 **The Collaboration Loop**:")
+        st.markdown("- **The Researcher Agent**: Evaluates your chosen topic, extracts deep insight variables, and organizes a rough factual index sheet.")
+        st.markdown("- **The Content Writer Agent**: Receives those rough notes, applies creative text formatting rules, and refines everything into a gorgeous, readable report.")
+        st.info("Because they collaborate step-by-step, the output is significantly more detailed than a simple standalone AI prompt!")
+
+# TAB 2: MAIN WORKSPACE
 with tab_workspace:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Split layout: Left column inputs (45%), right column outputs (55%)
-    col_input, col_output = st.columns([45, 55], gap="large")
+    # Grid split structure
+    col_input, col_output = st.columns([4, 6], gap="large")
     
     with col_input:
-        st.subheader("Target Objectives")
+        st.subheader("Your Task Settings")
         user_topic = st.text_input(
-            "Define research vector parameters:", 
-            placeholder="e.g., Cross-border blockchain payment infrastructure 2026",
+            "What should the agents work on today?", 
+            placeholder="e.g., The cutest coffee shop designs in Tokyo",
         )
         
-        with st.expander("🛠️ Advanced Execution Controls"):
-            agent_creativity = st.slider("System Temperature Control", 0.0, 1.0, 0.7)
+        with st.expander("🎈 Fun Adjustment Options"):
+            agent_creativity = st.slider("Writing Playfulness (Temperature)", 0.0, 1.0, 0.7)
             
         st.markdown("<br>", unsafe_allow_html=True)
-        button_clicked = st.button("Initialize Agent Sequence", use_container_width=True)
+        button_clicked = st.button("Start the AI Magic! ✨", use_container_width=True)
 
     with col_output:
-        st.subheader("Live Processing Feed")
+        st.subheader("Live Working Feed")
         
         if button_clicked:
-            if not user_key:
-                st.error("Authentication Failure: Please provide your Groq API key inside the Settings tab.")
+            # Check for key from the other tab variable
+            if 'user_key' not in locals() or not user_key:
+                st.error("💝 Please hop over to the 'How It Works' tab and paste your API key first!")
             elif not user_topic:
-                st.warning("Input Error: Missing target project parameter requirements.")
+                st.warning("🧁 Oops! Please write a topic vector parameter so the agents know what to look for.")
             else:
-                with st.spinner("Processing agent sequence..."):
+                with st.spinner("✨ Tiny agents are typing, thinking, and cleaning raw research files..."):
                     try:
                         client = Groq(api_key=user_key)
                         
-                        # Agent Step 1 Execution
+                        # Step 1
                         research_prompt = f"You are a Senior Research Analyst. Break down key trends, pros, and cons regarding: {user_topic}. Provide a detailed bulleted summary of research findings."
                         research_response = client.chat.completions.create(
                             messages=[{"role": "user", "content": research_prompt}],
@@ -160,7 +164,7 @@ with tab_workspace:
                         )
                         research_notes = research_response.choices[0].message.content
                         
-                        # Agent Step 2 Execution
+                        # Step 2
                         writer_prompt = f"You are a professional Content Strategist. Take these raw research findings and rewrite them into a compelling, 3-paragraph article:\n\n{research_notes}"
                         writer_response = client.chat.completions.create(
                             messages=[{"role": "user", "content": writer_prompt}],
@@ -169,11 +173,11 @@ with tab_workspace:
                         )
                         final_article = writer_response.choices[0].message.content
                         
-                        st.success("Sequence completed successfully.")
-                        st.markdown("### Processed Artifact Output:")
+                        st.success("🎉 All tasks are perfectly completed!")
+                        st.markdown("### 📝 Your Custom Generated Report:")
                         st.info(final_article)
                         
                     except Exception as e:
-                        st.error(f"Processing Exception: {e}")
+                        st.error(f"Oh no! An execution glitch happened: {e}")
         else:
-            st.info("System idle. Define an execution vector target in the configuration workspace to begin.")
+            st.info("App is currently resting. Fill out a topic layout on the left panel to wake the agents up!")
