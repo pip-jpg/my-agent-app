@@ -7,7 +7,7 @@ from supabase import create_client, Client
 
 # 1. Initialize Supabase Cloud Database Connection
 SUPABASE_URL = "https://ryxozerjvgbxszkemama.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5eG96ZXJqdmdieHN6a2VtYW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTU2NzMsImV4cCI6MjA5ODA3MTY3M30.uCvkpWjNDlgAe521u_oOgnUW0M-2afSGwzKhkjST7ak"  # Keep your long anon key pasted here
+SUPABASE_KEY = "PASeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5eG96ZXJqdmdieHN6a2VtYW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTU2NzMsImV4cCI6MjA5ODA3MTY3M30.uCvkpWjNDlgAe521u_oOgnUW0M-2afSGwzKhkjST7ak"  # Put your anon key here!
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -68,20 +68,16 @@ with tab_account:
                 except Exception as e:
                     st.error(f"Registration failed: {e}")
     else:
-        # User is logged in!
         st.subheader(f"👋 Welcome back, {st.session_state.user_session.email}!")
         
-        # CRITICAL FIX: Wrapped inside a try block to shield against RLS API database crashes
         saved_groq = ""
         saved_tavily = ""
-               # Clean data pull inside the account tab (Lines 78-82)
         try:
             db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
             if db_profile.data and len(db_profile.data) > 0:
                 saved_groq = db_profile.data[0].get("groq_key", "")
                 saved_tavily = db_profile.data[0].get("tavily_key", "")
         except Exception:
-            # Safely fallback to blank fields if database rows are inaccessible
             pass
         
         st.markdown("### 💾 Your Stored API Keys")
@@ -90,7 +86,6 @@ with tab_account:
         
         if st.button("Save Keys and Sync to Database Lock", use_container_width=True):
             try:
-                # Upsert profile into the secure database table
                 supabase.table("user_profiles").upsert({
                     "id": st.session_state.user_session.id,
                     "groq_key": new_groq,
@@ -110,12 +105,11 @@ with tab_account:
 with tab_chat:
     st.markdown("<br>", unsafe_allow_html=True)
     
-              # Clean data pull inside the chat tab (Lines 113-117)
-            try:
-                db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
-                if db_profile.data and len(db_profile.data) > 0:
-                    g_key = db_profile.data[0].get("groq_key", "")
-                    t_key = db_profile.data[0].get("tavily_key", "")
+    for msg in st.session_state.messages:
+        avatar = "🌸" if msg["role"] == "assistant" else "👤"
+        with st.chat_message(msg["role"], avatar=avatar):
+            if isinstance(msg["content"], dict) and msg["content"].get("type") == "image":
+                st.image(msg["content"]["url"], caption=msg["content"]["prompt"], use_container_width=True)
             else:
                 st.markdown(msg["content"])
                 
@@ -128,7 +122,6 @@ with tab_chat:
             with st.chat_message("assistant", avatar="🌸"):
                 st.error("💝 Security Alert: Please jump over to the Registration tab and log in first to access the AI worker!")
         else:
-            # CRITICAL FIX: Wrapped inside a try block to shield chat routing from crashing
             g_key = ""
             t_key = ""
             try:
@@ -166,7 +159,7 @@ with tab_chat:
                                         payload_messages.append({"role": m["role"], "content": m["content"]})
                                         
                                 response = client.chat.completions.create(messages=payload_messages, model="llama-3.3-70b-versatile", temperature=0.7)
-                                agent_reply = response.choices.message.content
+                                agent_reply = response.choices[0].message.content
                                 st.markdown(agent_reply)
                                 st.session_state.messages.append({"role": "assistant", "content": agent_reply})
                         except Exception as e:
