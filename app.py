@@ -7,7 +7,7 @@ from supabase import create_client, Client
 
 # 1. Initialize Supabase Cloud Database Connection
 SUPABASE_URL = "https://ryxozerjvgbxszkemama.supabase.co"
-SUPABASE_KEY = "PASeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5eG96ZXJqdmdieHN6a2VtYW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTU2NzMsImV4cCI6MjA5ODA3MTY3M30.uCvkpWjNDlgAe521u_oOgnUW0M-2afSGwzKhkjST7ak"  # Put your anon key here!
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5eG96ZXJqdmdieHN6a2VtYW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTU2NzMsImV4cCI6MjA5ODA3MTY3M30.uCvkpWjNDlgAe521u_oOgnUW0M-2afSGwzKhkjST7ak"  # Put your anon key here!
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
