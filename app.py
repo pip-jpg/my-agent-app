@@ -7,7 +7,7 @@ from supabase import create_client, Client
 
 # 1. Initialize Supabase Cloud Database Connection
 SUPABASE_URL = "https://ryxozerjvgbxszkemama.supabase.co"
-SUPABASE_KEY = "sb_publishable_o1RU6g-yg8K2kkmZwGizRg_7H-XDe7-E"  # Keep your long anon key pasted here
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5eG96ZXJqdmdieHN6a2VtYW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTU2NzMsImV4cCI6MjA5ODA3MTY3M30.uCvkpWjNDlgAe521u_oOgnUW0M-2afSGwzKhkjST7ak"  # Keep your long anon key pasted here
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -74,6 +74,7 @@ with tab_account:
         # CRITICAL FIX: Wrapped inside a try block to shield against RLS API database crashes
         saved_groq = ""
         saved_tavily = ""
+               # Clean data pull inside the account tab (Lines 78-82)
         try:
             db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
             if db_profile.data and len(db_profile.data) > 0:
@@ -109,11 +110,12 @@ with tab_account:
 with tab_chat:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    for msg in st.session_state.messages:
-        avatar = "🌸" if msg["role"] == "assistant" else "👤"
-        with st.chat_message(msg["role"], avatar=avatar):
-            if isinstance(msg["content"], dict) and msg["content"].get("type") == "image":
-                st.image(msg["content"]["url"], caption=msg["content"]["prompt"], use_container_width=True)
+              # Clean data pull inside the chat tab (Lines 113-117)
+            try:
+                db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
+                if db_profile.data and len(db_profile.data) > 0:
+                    g_key = db_profile.data[0].get("groq_key", "")
+                    t_key = db_profile.data[0].get("tavily_key", "")
             else:
                 st.markdown(msg["content"])
                 
