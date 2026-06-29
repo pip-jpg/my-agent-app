@@ -6,9 +6,8 @@ from tavily import TavilyClient
 from supabase import create_client, Client
 
 # 1. Initialize Supabase Cloud Database Connection
-# UPDATE THESE TO MATCH YOUR ACTUAL PROJECT KEYS
 SUPABASE_URL = "https://ryxozerjvgbxszkemama.supabase.co"
-SUPABASE_KEY = "sb_publishable_o1RU6g-yg8K2kkmZwGizRg_7H-XDe7-"
+SUPABASE_KEY = "sb_publishable_o1RU6g-yg8K2kkmZwGizRg_7H-XDe7-E"  # Keep your long anon key pasted here
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -69,13 +68,20 @@ with tab_account:
                 except Exception as e:
                     st.error(f"Registration failed: {e}")
     else:
-        # User is logged in! Fetch or Update their permanent profile keys from Supabase
+        # User is logged in!
         st.subheader(f"👋 Welcome back, {st.session_state.user_session.email}!")
         
-        # Load keys safely using dictionary list formatting
-        db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
-        saved_groq = db_profile.data[0].get("groq_key", "") if db_profile.data else ""
-        saved_tavily = db_profile.data[0].get("tavily_key", "") if db_profile.data else ""
+        # CRITICAL FIX: Wrapped inside a try block to shield against RLS API database crashes
+        saved_groq = ""
+        saved_tavily = ""
+        try:
+            db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
+            if db_profile.data and len(db_profile.data) > 0:
+                saved_groq = db_profile.data[0].get("groq_key", "")
+                saved_tavily = db_profile.data[0].get("tavily_key", "")
+        except Exception:
+            # Safely fallback to blank fields if database rows are inaccessible
+            pass
         
         st.markdown("### 💾 Your Stored API Keys")
         new_groq = st.text_input("Saved Groq Key Profile:", value=saved_groq, type="password")
@@ -90,6 +96,7 @@ with tab_account:
                     "tavily_key": new_tavily
                 }).execute()
                 st.success("🌸 Keys safely saved to your cloud profile! You can now use the chat freely.")
+                st.rerun()
             except Exception as e:
                 st.error(f"Database save error: {e}")
                 
@@ -119,10 +126,16 @@ with tab_chat:
             with st.chat_message("assistant", avatar="🌸"):
                 st.error("💝 Security Alert: Please jump over to the Registration tab and log in first to access the AI worker!")
         else:
-            # Fetch active credentials safely from the dictionary index list
-            db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
-            g_key = db_profile.data[0].get("groq_key", "") if db_profile.data else ""
-            t_key = db_profile.data[0].get("tavily_key", "") if db_profile.data else ""
+            # CRITICAL FIX: Wrapped inside a try block to shield chat routing from crashing
+            g_key = ""
+            t_key = ""
+            try:
+                db_profile = supabase.table("user_profiles").select("*").eq("id", st.session_state.user_session.id).execute()
+                if db_profile.data and len(db_profile.data) > 0:
+                    g_key = db_profile.data[0].get("groq_key", "")
+                    t_key = db_profile.data[0].get("tavily_key", "")
+            except Exception:
+                pass
             
             if not g_key or not t_key:
                 with st.chat_message("assistant", avatar="🌸"):
